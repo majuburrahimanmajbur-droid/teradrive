@@ -1,0 +1,40 @@
+name: Build TeraDrive.exe
+
+# Runs on a free Microsoft-hosted Windows machine.
+# Trigger it by going to the "Actions" tab on GitHub and clicking "Run workflow",
+# or automatically every time you push to the main branch.
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PyInstaller
+        run: python -m pip install pyinstaller
+
+      - name: Build TeraDrive.exe
+        run: python -m PyInstaller --onefile --noconsole --name TeraDrive teradrive.py
+
+      - name: Upload the exe as a build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TeraDrive-windows
+          path: dist/TeraDrive.exe
+
+      - name: Publish it to Releases
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          files: dist/TeraDrive.exe
